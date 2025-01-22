@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ eq_data.title }}</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background-color: #f4f4f9;
+        }
+        h1 { color: #333; }
+        .formula {
+            font-size: 28px; /* Увеличиваем размер формулы */
+            color: #333; 
+            margin-top: 20px; 
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px; 
+            width: 400px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        form label {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            display: block;
+        }
+        form input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        form button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        form button:hover {
+            background-color: #45a049;
+        }
+        #plot {
+            max-width: 1000px; /* Увеличиваем ширину */
+            max-height: 600px; /* Увеличиваем высоту */
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        .description {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #555;
+            text-align: center;
+            max-width: 800px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ eq_data.title }}</h1>
+    <div class="formula">
+        Формула: <br> \( {{ eq_data.formula }} \)
+    </div>
+    <form method="POST">
+    <h3>Введите параметры:</h3>
+    {% for param, description in eq_data.parameters.items() %}
+    <label>
+        {{ description }}: 
+        <input type="text" name="{{ param }}" value="{{ params.get(param, '') }}" required>
+    </label><br>
+    {% endfor %}
+    <button type="submit">Построить график</button>
+</form>
+    {% if plot_url %}
+    <div>
+        <h3>График решения:</h3>
+        <img id="plot" src="data:image/png;base64,{{ plot_url }}" alt="График">
+    </div>
+    {% endif %}
+    <div class="description">
+        <h3>Описание уравнения:</h3>
+        <p>{{ eq_data.description }}</p>
+    </div>
+</body>
+</html>
+
+
+
+
