@@ -7,3 +7,4 @@
    ```bash
    git clone https://github.com/vmu0428821-732/app.git
    cd app.git
+pip install -r requirements.txt
