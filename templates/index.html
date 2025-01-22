@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор уравнения</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        h1 { text-align: center; color: #333; }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            text-align: center;
+        }
+        .equation { 
+            margin-bottom: 15px; 
+            font-size: 1.5em;
+            color: #4CAF50;
+        }
+        .equation a {
+            text-decoration: none;
+            color: #4CAF50;
+            padding: 10px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+        .equation a:hover {
+            background-color: #e7f1e7;
+        }
+    </style>
+</head>
+<body>
+    <h1>Выберите уравнение</h1>
+    <ul>
+        {% for eq_key, eq_data in equations.items() %}
+        <li class="equation">
+            <a href="{{ url_for('equation_page', eq_name=eq_key) }}">{{ eq_data.title }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
