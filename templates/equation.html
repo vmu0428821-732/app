@@ -1,99 +1,498 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ eq_data.title }}</title>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js"></script>
+    <title>Параметры уравнения</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            background-color: #f4f4f9;
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
         }
-        h1 { color: #333; }
-        .formula {
-            font-size: 28px; /* Увеличиваем размер формулы */
-            color: #333; 
-            margin-top: 20px; 
+        .container {
+            max-width: 1200px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0d6efd;
+            margin-bottom: 30px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+        }
+        .animation-container {
+            margin-top: 30px;
             text-align: center;
         }
-        form {
-            margin-bottom: 20px; 
-            width: 400px;
-            background-color: #fff;
+        .animation-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .info-text {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .parameters-group {
+            background-color: #f8f9fa;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
-        form label {
+        .parameters-group h3 {
+            color: #0d6efd;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            font-weight: bold;
             font-size: 1.1em;
-            margin-bottom: 5px;
-            display: block;
         }
-        form input {
-            width: 100%;
+        .form-control {
+            font-size: 1.1em;
             padding: 8px;
-            margin-bottom: 10px;
-            font-size: 1em;
-            border: 1px solid #ccc;
-            border-radius: 4px;
         }
-        form button {
-            padding: 10px 20px;
-            font-size: 1em;
-            border: none;
-            background-color: #4CAF50;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
+        .animation-controls {
+            margin-bottom: 20px;
+        }
+        .animation-controls .btn {
+            font-size: 1.1em;
+            padding: 8px 20px;
+        }
+        #animationCanvas {
             width: 100%;
+            height: 600px;
+            margin: 20px 0;
         }
-        form button:hover {
-            background-color: #45a049;
-        }
-        #plot {
-            max-width: 1000px; /* Увеличиваем ширину */
-            max-height: 600px; /* Увеличиваем высоту */
-            margin-top: 20px;
-            border-radius: 8px;
-        }
-        .description {
-            margin-top: 20px;
+        .axis-label {
             font-size: 16px;
-            color: #555;
-            text-align: center;
-            max-width: 800px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>{{ eq_data.title }}</h1>
-    <div class="formula">
-        Формула: <br> \( {{ eq_data.formula }} \)
+    <div class="container">
+        <h1 class="text-center">
+            {% if eq_name == 'heat' %}
+            Уравнение теплопроводности
+            {% elif eq_name == 'wave' %}
+            Волновое уравнение
+            {% elif eq_name == 'advection' %}
+            Уравнение переноса
+            {% endif %}
+        </h1>
+        <form method="POST">
+            <input type="hidden" name="eq_name" value="{{ eq_name }}">
+            
+            <div class="parameters-group">
+                <h3>Параметры задачи</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="x_start">Начало отрезка по оси x:</label>
+                            <input type="number" class="form-control" id="x_start" name="x_start" step="0.1" value="{{ params.x_start if params.x_start is defined else 0 }}" required>
+                            <small class="form-text text-muted">Введите начальную координату отрезка</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="x_end">Конец отрезка по оси x:</label>
+                            <input type="number" class="form-control" id="x_end" name="x_end" step="0.1" value="{{ params.x_end if params.x_end is defined else 10 }}" required>
+                            <small class="form-text text-muted">Введите конечную координату отрезка</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="t_end">Конечный момент времени:</label>
+                            <input type="number" class="form-control" id="t_end" name="t_end" step="0.1" min="0.1" value="{{ params.t_end if params.t_end is defined else 1.0 }}" required>
+                            <small class="form-text text-muted">Введите конечный момент времени</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {% if eq_name == 'heat' %}
+                        <div class="form-group">
+                            <label for="k">Коэффициент теплопроводности k:</label>
+                            <input type="number" class="form-control" id="k" name="k" step="0.1" min="0.1" max="1.0" value="{{ params.k if params.k is defined else '0.5' }}" required>
+                            <small class="form-text text-muted">Значение должно быть в диапазоне 0 < k ≤ 1</small>
+                        </div>
+                        {% elif eq_name == 'wave' %}
+                        <div class="form-group">
+                            <label for="c">Скорость волны c:</label>
+                            <input type="number" class="form-control" id="c" name="c" step="0.1" min="0.1" value="{{ params.c if params.c is defined else '1.0' }}" required>
+                            <small class="form-text text-muted">Любое положительное значение</small>
+                        </div>
+                        {% elif eq_name == 'advection' %}
+                        <div class="form-group">
+                            <label for="v">Скорость потока v:</label>
+                            <input type="number" class="form-control" id="v" name="v" step="0.1" min="0.1" value="{{ params.v if params.v is defined else '1.0' }}" required>
+                            <small class="form-text text-muted">Любое положительное значение</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="initial_condition">Начальное условие:</label>
+                            {% if eq_name == 'heat' %}
+                            <select class="form-control" id="initial_condition" name="initial_condition">
+                                <option value="sin" {% if params.initial_condition == 'sin' %}selected{% endif %}>u₀(x) = sin(πx/L)</option>
+                                <option value="gaussian" {% if params.initial_condition == 'gaussian' %}selected{% endif %}>u₀(x) = e^(-((x-x₀)²)/2a)</option>
+                                <option value="linear" {% if params.initial_condition == 'linear' %}selected{% endif %}>u₀(x) = kx + b</option>
+                            </select>
+                            <div id="gaussian_params" class="mt-2" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="number" class="form-control" name="x0" placeholder="x₀ (центр)" value="{{ params.x0 if params.x0 is defined else 5 }}" step="0.1">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="number" class="form-control" name="a" placeholder="a (ширина)" value="{{ params.a if params.a is defined else 1 }}" step="0.1" min="0.1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="linear_params" class="mt-2" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="number" class="form-control" name="k_linear" placeholder="k (наклон)" value="{{ params.k_linear if params.k_linear is defined else 1 }}" step="0.1">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="number" class="form-control" name="b" placeholder="b (смещение)" value="{{ params.b if params.b is defined else 0 }}" step="0.1">
+                                    </div>
+                                </div>
+                            </div>
+                            {% elif eq_name == 'wave' %}
+                            <select class="form-control" id="initial_condition" name="initial_condition">
+                                <option value="sin1">u₀(x) = sin(πx/L)</option>
+                                <option value="sin2">u₀(x) = sin(2πx/L)</option>
+                                <option value="sin3">u₀(x) = sin(3πx/L)</option>
+                            </select>
+                            {% elif eq_name == 'advection' %}
+                            <select class="form-control" id="initial_condition" name="initial_condition">
+                                <option value="step">Ступенчатая функция</option>
+                                <option value="gaussian">u₀(x) = e^(-((x-x₀)²)/2a)</option>
+                            </select>
+                            <div id="gaussian_params" class="mt-2" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="number" class="form-control" name="x0" placeholder="x₀ (центр)" value="{{ params.x0 if params.x0 is defined else 5 }}" step="0.1">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="number" class="form-control" name="a" placeholder="a (ширина)" value="{{ params.a if params.a is defined else 1 }}" step="0.1" min="0.1">
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Выберите тип начального условия</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="parameters-group">
+                <h3>Граничные условия</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Левая граница (x = x_start):</label>
+                            <select class="form-control mb-2" id="left_boundary_type" name="left_boundary_type">
+                                <option value="dirichlet" {% if params.left_boundary_type == 'dirichlet' %}selected{% endif %}>Условие Дирихле (u = const)</option>
+                                <option value="neumann" {% if params.left_boundary_type == 'neumann' %}selected{% endif %}>Условие Неймана (du/dx = const)</option>
+                            </select>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="left_boundary_value" name="left_boundary_value" 
+                                       value="{{ params.left_boundary_value if params.left_boundary_value is defined else 0 }}" step="0.1">
+                                <span class="input-group-text" id="left_boundary_unit">u</span>
+                            </div>
+                            <small class="form-text text-muted">Значение на левой границе</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Правая граница (x = x_end):</label>
+                            <select class="form-control mb-2" id="right_boundary_type" name="right_boundary_type">
+                                <option value="dirichlet" {% if params.right_boundary_type == 'dirichlet' %}selected{% endif %}>Условие Дирихле (u = const)</option>
+                                <option value="neumann" {% if params.right_boundary_type == 'neumann' %}selected{% endif %}>Условие Неймана (du/dx = const)</option>
+                            </select>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="right_boundary_value" name="right_boundary_value" 
+                                       value="{{ params.right_boundary_value if params.right_boundary_value is defined else 0 }}" step="0.1">
+                                <span class="input-group-text" id="right_boundary_unit">u</span>
+                            </div>
+                            <small class="form-text text-muted">Значение на правой границе</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="parameters-group">
+                <h3>Параметры метода решения</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="N">Количество разбиений отрезка N:</label>
+                            <input type="number" class="form-control" id="N" name="N" step="1" min="10" value="{{ params.N if params.N is defined else 100 }}" required>
+                            <small class="form-text text-muted">Определяет точность решения по пространству</small>
+                            <div class="info-text">Рекомендуемые значения: 100-500. При N=100 будет 101 точка на графике.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="cfl">Коэффициент устойчивости (CFL):</label>
+                            <input type="number" class="form-control" id="cfl" name="cfl" step="0.1" min="0.1" max="1.0" value="{{ params.cfl if params.cfl is defined else '0.9' }}" required>
+                            <small class="form-text text-muted">Значение должно быть в диапазоне 0 < CFL ≤ 1</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Решить уравнение</button>
+        </form>
+
+        {% if animation_data %}
+        <div class="animation-container" data-eq-name="{{ eq_name }}">
+            <h3>Анимация решения</h3>
+            <div class="animation-controls mb-3">
+                <button id="playPauseButton" class="btn btn-info me-2">▶️ Воспроизвести</button>
+                <button id="resetButton" class="btn btn-info me-2">🔄 Сбросить</button>
+                <div class="form-check d-inline-block">
+                    <input class="form-check-input" type="checkbox" id="loopAnimation" checked>
+                    <label class="form-check-label" for="loopAnimation">
+                        Зациклить анимацию
+                    </label>
+                </div>
+            </div>
+            <div id="debug-info" style="margin: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+                <small style="font-size: 0.8em;">Кадр: <span id="current-frame-number">0</span> из <span id="total-frames">0</span></small>
+            </div>
+            <canvas id="animationCanvas" width="1200" height="600" style="width: 100%; height: auto;"></canvas>
+            <div class="progress mt-2">
+                <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <script>
+            (function() {
+                const animationData = {
+                    frameData: {{ animation_data.frame_data|tojson|safe }},
+                    frameCount: {{ animation_data.frame_count }},
+                    interval: {{ animation_data.interval }}
+                };
+                // Получаем тип уравнения из data-атрибута
+                const eqName = document.querySelector('.animation-container').getAttribute('data-eq-name');
+                let currentFrame = 0;
+                let animationInterval = null;
+                let isPlaying = false;
+                const canvas = document.getElementById('animationCanvas');
+                const ctx = canvas.getContext('2d');
+                const playPauseButton = document.getElementById('playPauseButton');
+                const resetButton = document.getElementById('resetButton');
+                const progressBar = document.getElementById('progressBar');
+                const currentFrameNumber = document.getElementById('current-frame-number');
+                const totalFrames = document.getElementById('total-frames');
+                totalFrames.textContent = animationData.frameCount;
+                currentFrameNumber.textContent = '0';
+                // Переменные отступы
+                // Увеличенные отступы для видимости подписей
+                const paddingLeft = 100, paddingRight = 40, paddingTop = 80, paddingBottom = 60;
+                function drawFrame(frameIndex) {
+                    const frame = animationData.frameData[frameIndex];
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    // Фиксированные пределы осей
+                    let y_min, y_max;
+                    if (eqName === 'wave') {
+                        y_min = -1.2; y_max = 1.2;
+                    } else if (eqName === 'advection') {
+                        y_min = -0.2; y_max = 1.2;
+                    } else {
+                        y_min = 0.0; y_max = 1.2;
+                    }
+                    const x_min = frame.x[0];
+                    const x_max = frame.x[frame.x.length-1];
+                    // Сетка Y
+                    ctx.strokeStyle = '#ddd';
+                    ctx.lineWidth = 0.5;
+                    for (let i = 0; i <= 10; i++) {
+                        const y = y_min + (y_max - y_min) * i / 10;
+                        const canvasY = canvas.height - paddingBottom - ((y - y_min) / (y_max - y_min)) * (canvas.height - paddingTop - paddingBottom);
+                        ctx.beginPath();
+                        ctx.moveTo(paddingLeft, canvasY);
+                        ctx.lineTo(canvas.width - paddingRight, canvasY);
+                        ctx.stroke();
+                        ctx.fillStyle = '#000';
+                        ctx.font = 'bold 22px Arial';
+                        ctx.textAlign = 'right';
+                        ctx.fillText(y.toFixed(2), paddingLeft - 5, canvasY + 8);
+                    }
+                    // Сетка X
+                    for (let i = 0; i <= 10; i++) {
+                        const x = x_min + (x_max - x_min) * i / 10;
+                        const canvasX = paddingLeft + ((x - x_min) / (x_max - x_min)) * (canvas.width - paddingLeft - paddingRight);
+                        ctx.beginPath();
+                        ctx.moveTo(canvasX, paddingTop);
+                        ctx.lineTo(canvasX, canvas.height - paddingBottom);
+                        ctx.stroke();
+                        ctx.fillStyle = '#000';
+                        ctx.font = 'bold 22px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(x.toFixed(2), canvasX, canvas.height - paddingBottom + 28);
+                    }
+                    // Оси
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(paddingLeft, canvas.height - paddingBottom);
+                    ctx.lineTo(canvas.width - paddingRight, canvas.height - paddingBottom);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(paddingLeft, paddingTop);
+                    ctx.lineTo(paddingLeft, canvas.height - paddingBottom);
+                    ctx.stroke();
+                    // Подписи осей
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 28px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('x', canvas.width - paddingRight + 30, canvas.height - paddingBottom + 35);
+                    ctx.textAlign = 'right';
+                    ctx.fillText('u(x,t)', paddingLeft - 20, paddingTop - 20);
+                    // График
+                    ctx.strokeStyle = '#0066cc';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let i = 0; i < frame.x.length; i++) {
+                        const x = frame.x[i];
+                        const y = frame.y[i];
+                        const canvasX = paddingLeft + ((x - x_min) / (x_max - x_min)) * (canvas.width - paddingLeft - paddingRight);
+                        const canvasY = canvas.height - paddingBottom - ((y - y_min) / (y_max - y_min)) * (canvas.height - paddingTop - paddingBottom);
+                        if (i === 0) ctx.moveTo(canvasX, canvasY);
+                        else ctx.lineTo(canvasX, canvasY);
+                    }
+                    ctx.stroke();
+                    // Заголовок
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 32px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(frame.title, canvas.width / 2, paddingTop - 20);
+                    // Информация о кадре
+                    currentFrameNumber.textContent = (frameIndex + 1).toString();
+                    progressBar.style.width = (frameIndex / (animationData.frameCount - 1) * 100) + '%';
+                }
+                function updateFrame() {
+                    if (currentFrame >= animationData.frameCount) {
+                        if (document.getElementById('loopAnimation').checked) {
+                            currentFrame = 0;
+                        } else {
+                            pause();
+                            return;
+                        }
+                    }
+                    drawFrame(currentFrame);
+                    currentFrame++;
+                }
+                function togglePlayPause() {
+                    if (isPlaying) {
+                        pause();
+                    } else {
+                        play();
+                    }
+                }
+                function play() {
+                    if (!isPlaying) {
+                        if (currentFrame >= animationData.frameCount) {
+                            currentFrame = 0;
+                        }
+                        isPlaying = true;
+                        playPauseButton.textContent = '⏸️ Пауза';
+                        animationInterval = setInterval(updateFrame, animationData.interval);
+                    }
+                }
+                function pause() {
+                    if (isPlaying) {
+                        isPlaying = false;
+                        playPauseButton.textContent = '▶️ Воспроизвести';
+                        if (animationInterval) {
+                            clearInterval(animationInterval);
+                            animationInterval = null;
+                        }
+                    }
+                }
+                function reset() {
+                    pause();
+                    currentFrame = 0;
+                    drawFrame(0);
+                }
+                playPauseButton.addEventListener('click', togglePlayPause);
+                resetButton.addEventListener('click', reset);
+                drawFrame(0);
+                play();
+            })();
+        </script>
+        {% endif %}
     </div>
-    <form method="POST">
-    <h3>Введите параметры:</h3>
-    {% for param, description in eq_data.parameters.items() %}
-    <label>
-        {{ description }}: 
-        <input type="text" name="{{ param }}" value="{{ params.get(param, '') }}" required>
-    </label><br>
-    {% endfor %}
-    <button type="submit">Построить график</button>
-</form>
-    {% if plot_url %}
-    <div>
-        <h3>График решения:</h3>
-        <img id="plot" src="data:image/png;base64,{{ plot_url }}" alt="График">
-    </div>
-    {% endif %}
-    <div class="description">
-        <h3>Описание уравнения:</h3>
-        <p>{{ eq_data.description }}</p>
-    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Обработчики событий для формы
+        window.addEventListener('load', function() {
+            console.log('Скрипт обработки формы загружен');
+            
+            // Обработка начальных условий
+            const initialConditionSelect = document.getElementById('initial_condition');
+            const gaussianParams = document.getElementById('gaussian_params');
+            const linearParams = document.getElementById('linear_params');
+
+            if (initialConditionSelect && gaussianParams && linearParams) {
+                console.log('Найдены элементы начальных условий');
+                initialConditionSelect.addEventListener('change', function() {
+                    console.log('Изменено начальное условие:', this.value);
+                    gaussianParams.style.display = this.value === 'gaussian' ? 'block' : 'none';
+                    linearParams.style.display = this.value === 'linear' ? 'block' : 'none';
+                });
+            }
+
+            // Обработка граничных условий
+            const leftBoundaryType = document.getElementById('left_boundary_type');
+            const rightBoundaryType = document.getElementById('right_boundary_type');
+            const leftBoundaryUnit = document.getElementById('left_boundary_unit');
+            const rightBoundaryUnit = document.getElementById('right_boundary_unit');
+
+            function updateBoundaryUnit(selectElement, unitElement) {
+                if (selectElement && unitElement) {
+                    const unit = selectElement.value === 'dirichlet' ? 'u' : 'du/dx';
+                    console.log('Обновление единицы измерения:', unit);
+                    unitElement.textContent = unit;
+                }
+            }
+
+            if (leftBoundaryType && leftBoundaryUnit) {
+                console.log('Найдены элементы левой границы');
+                leftBoundaryType.addEventListener('change', function() {
+                    console.log('Изменен тип левой границы:', this.value);
+                    updateBoundaryUnit(leftBoundaryType, leftBoundaryUnit);
+                });
+            }
+
+            if (rightBoundaryType && rightBoundaryUnit) {
+                console.log('Найдены элементы правой границы');
+                rightBoundaryType.addEventListener('change', function() {
+                    console.log('Изменен тип правой границы:', this.value);
+                    updateBoundaryUnit(rightBoundaryType, rightBoundaryUnit);
+                });
+            }
+        });
+    </script>
 </body>
 </html>
